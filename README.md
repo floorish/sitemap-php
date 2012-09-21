@@ -54,11 +54,11 @@ If you need to change domain for sitemap instance, you can override it via `setD
 	
 Finally we create index for sitemap files. This method also closes tags of latest generated xml file.
 
-	$sitemap->createSitemapIndex('http://example.com/sitemap/', 'Today');
+	$sitemap->createSitemap('http://example.com/sitemap/', 'Today');
 	
 When you run your script, it generates and saves XML files to given path.
 	
-sitemap-0.xml
+sitemap.xml
 
 	<?xml version="1.0" encoding="UTF-8"?>
 	<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -86,7 +86,12 @@ sitemap-0.xml
 	 </url>
 	</urlset>
 	
-sitemap-index.xml
+If there are more than 50000 paths, it will split the sitemap into multiple parts:
+sitemap-0.xml
+sitemap-1.xml etc.
+
+An index will be created that links to all seperate sitemaps:
+sitemap.xml
 
 	<?xml version="1.0" encoding="UTF-8"?>
 	<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -96,4 +101,4 @@ sitemap-index.xml
 	 </sitemap>
 	</sitemapindex>
 	
-You need to submit sitemap-index.xml to Google Sitemaps.
+You need to submit sitemap.xml to Google Sitemaps.
