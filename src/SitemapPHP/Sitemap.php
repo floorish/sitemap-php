@@ -32,8 +32,7 @@ class Sitemap {
 	const SCHEMA = 'http://www.sitemaps.org/schemas/sitemap/0.9';
 	const DEFAULT_PRIORITY = 0.5;
 	const ITEM_PER_SITEMAP = 50000;
-	const SEPERATOR = '-';
-	const INDEX_SUFFIX = 'index';
+	const SEPARATOR = '-';
 
 	/**
 	 *
@@ -160,11 +159,14 @@ class Sitemap {
 	 */
 	private function startSitemap() {
 		$this->setWriter(new \XMLWriter());
-		$this->getWriter()->openURI($this->getPath() . $this->getFilename() . self::SEPERATOR . $this->getCurrentSitemap() . self::EXT);
+        $this->getWriter()->openURI($this->getPath() . $this->getFilename() .
+            ( $this->getCurrentSitemap() > 0 ? self::SEPARATOR . $this->getCurrentSitemap() : '') . self::EXT);
 		$this->getWriter()->startDocument('1.0', 'UTF-8');
 		$this->getWriter()->setIndent(true);
 		$this->getWriter()->startElement('urlset');
 		$this->getWriter()->writeAttribute('xmlns', self::SCHEMA);
+
+        $this->incCurrentSitemap();
 	}
 
 	/**
@@ -182,7 +184,6 @@ class Sitemap {
 				$this->endSitemap();
 			}
 			$this->startSitemap();
-			$this->incCurrentSitemap();
 		}
 		$this->incCurrentItem();
 		$this->getWriter()->startElement('url');
@@ -218,6 +219,7 @@ class Sitemap {
 	private function endSitemap() {
 		$this->getWriter()->endElement();
 		$this->getWriter()->endDocument();
+        $this->getWriter()->flush();
 	}
 
 	/**
@@ -226,22 +228,28 @@ class Sitemap {
 	 * @param string $loc Accessible URL path of sitemaps
 	 * @param string|int $lastmod The date of last modification of sitemap. Unix timestamp or any English textual datetime description.
 	 */
-	public function createSitemapIndex($loc, $lastmod = 'Today') {
+	public function createSitemap($loc, $lastmod = 'Today') {
 		$this->endSitemap();
-		$indexwriter = new \XMLWriter();
-		$indexwriter->openURI($this->getPath() . $this->getFilename() . self::SEPERATOR . self::INDEX_SUFFIX . self::EXT);
-		$indexwriter->startDocument('1.0', 'UTF-8');
-		$indexwriter->setIndent(true);
-		$indexwriter->startElement('sitemapindex');
-		$indexwriter->writeAttribute('xmlns', self::SCHEMA);
-		for ($index = 0; $index < $this->getCurrentSitemap(); $index++) {
-			$indexwriter->startElement('sitemap');
-			$indexwriter->writeElement('loc', $loc . $this->getFilename() . self::SEPERATOR . $index . self::EXT);
-			$indexwriter->writeElement('lastmod', $this->getLastModifiedDate($lastmod));
-			$indexwriter->endElement();
-		}
-		$indexwriter->endElement();
-		$indexwriter->endDocument();
+        if ( $this->getCurrentSitemap() > 1 )
+        {
+            rename($this->getPath() . $this->getFilename() . self::EXT, $this->getPath() . $this->getFilename() . self::SEPARATOR . '0' . self::EXT);
+            $indexwriter = new \XMLWriter();
+            $indexwriter->openURI($this->getPath() . $this->getFilename() . self::EXT);
+            $indexwriter->startDocument('1.0', 'UTF-8');
+            $indexwriter->setIndent(true);
+            $indexwriter->startElement('sitemapindex');
+            $indexwriter->writeAttribute('xmlns', self::SCHEMA);
+
+            for ($index = 0; $index < $this->getCurrentSitemap(); $index++) {
+                $indexwriter->startElement('sitemap');
+                $indexwriter->writeElement('loc', $loc . $this->getFilename() . self::SEPARATOR . $index . self::EXT);
+                $indexwriter->writeElement('lastmod', $this->getLastModifiedDate($lastmod));
+                $indexwriter->endElement();
+            }
+
+            $indexwriter->endElement();
+            $indexwriter->endDocument();
+        }
 	}
 
 }
